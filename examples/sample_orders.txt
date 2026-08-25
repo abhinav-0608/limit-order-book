@@ -1,0 +1,23 @@
+# Sample order-entry feed for Stage 4. Run with:
+#   python -m limit_order_book.io_adapter examples/sample_orders.txt
+
+LIMIT,bid1,BUY,990,50
+LIMIT,bid2,BUY,989,100
+LIMIT,ask1,SELL,1000,30
+LIMIT,ask2,SELL,1001,200
+
+# aggressive market buy sweeps ask1 fully and part of ask2
+MARKET,mkt1,BUY,60
+
+# shrink bid2 -- keeps its place in the queue
+MODIFY,bid2,,40
+
+# push bid1's price up until it crosses the book -- trades immediately
+MODIFY,bid1,1001,
+
+# clean up
+CANCEL,bid2
+
+# a couple of rejections, to see they don't crash the feed
+LIMIT,ask1,SELL,999,10
+LIMIT,bad,BUY,900,0
