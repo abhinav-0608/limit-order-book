@@ -36,6 +36,10 @@ class OrderBook:
         self._asks: "SortedDict[int, PriceLevel]" = SortedDict()
         self._orders: dict[OrderId, Order] = {}
         self._sequence_counter = itertools.count(1)
+        # Separate counter/namespace from order sequence numbers: trades and
+        # orders are different kinds of event and numbering them together
+        # would make neither sequence mean anything precise on its own.
+        self._trade_sequence_counter = itertools.count(1)
 
     # -- internal helpers -----------------------------------------------
 
@@ -44,6 +48,9 @@ class OrderBook:
 
     def _next_sequence(self) -> int:
         return next(self._sequence_counter)
+
+    def next_trade_sequence(self) -> int:
+        return next(self._trade_sequence_counter)
 
     def _remove_level_if_empty(self, side: Side, price: int) -> None:
         levels = self._levels(side)
@@ -104,6 +111,18 @@ class OrderBook:
         order.status = OrderStatus.CANCELLED
         del self._orders[order_id]
         return order
+
+    def remove_filled_order(self, order: Order) -> None:
+        """Retire a resting order whose remaining_quantity has reached zero:
+        unlink it from its price level (deleting the level if that empties
+        it) and drop it from the order_id index. Called by matching.py once
+        a fill brings an order to zero -- not meant for the "still has
+        quantity left" case, that's cancel_order/modify instead."""
+        level = self._levels(order.side)[order.price]
+        level.remove(order)
+        self._remove_level_if_empty(order.side, order.price)
+        order.status = OrderStatus.FILLED
+        del self._orders[order.order_id]
 
     def depth(self, side: Side) -> List[Tuple[int, int, int]]:
         """Return [(price, total_quantity, order_count), ...] best price first."""
