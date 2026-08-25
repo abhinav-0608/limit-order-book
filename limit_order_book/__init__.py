@@ -3,7 +3,7 @@ from .order_book import DuplicateOrderId, OrderBook, UnknownOrderId
 from .price_level import PriceLevel
 from .trade import Trade
 from .matching import match_incoming_order
-from .engine import submit_limit_order
+from .engine import InvalidOrder, modify_order, submit_limit_order, submit_market_order
 
 __all__ = [
     "Order",
@@ -18,4 +18,7 @@ __all__ = [
     "Trade",
     "match_incoming_order",
     "submit_limit_order",
+    "submit_market_order",
+    "modify_order",
+    "InvalidOrder",
 ]
